@@ -99,31 +99,31 @@ public class EnvironmentController {
 		this.acceptEmpty = acceptEmpty;
 	}
 
-	@RequestMapping(path = "/{name}/{profiles:.*[^-].*}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public Environment defaultLabel(@PathVariable String name, @PathVariable String profiles) {
-		return getEnvironment(name, profiles, null, false);
+	@RequestMapping(path = "/{application}/{profiles:.*[^-].*}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public Environment defaultLabel(@PathVariable String application, @PathVariable String profiles) {
+		return getEnvironment(application, profiles, null, false);
 	}
 
-	@RequestMapping(path = "/{name}/{profiles:.*[^-].*}", produces = EnvironmentMediaType.V2_JSON)
-	public Environment defaultLabelIncludeOrigin(@PathVariable String name, @PathVariable String profiles) {
-		return getEnvironment(name, profiles, null, true);
+	@RequestMapping(path = "/{application}/{profiles:.*[^-].*}", produces = EnvironmentMediaType.V2_JSON)
+	public Environment defaultLabelIncludeOrigin(@PathVariable String application, @PathVariable String profiles) {
+		return getEnvironment(application, profiles, null, true);
 	}
 
-	@RequestMapping(path = "/{name}/{profiles}/{label:.*}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public Environment labelled(@PathVariable String name, @PathVariable String profiles, @PathVariable String label) {
-		return getEnvironment(name, profiles, label, false);
+	@RequestMapping(path = "/{application}/{profiles}/{label:.*}", produces = MediaType.APPLICATION_JSON_VALUE)
+	public Environment labelled(@PathVariable String application, @PathVariable String profiles, @PathVariable String label) {
+		return getEnvironment(application, profiles, label, false);
 	}
 
-	@RequestMapping(path = "/{name}/{profiles}/{label:.*}", produces = EnvironmentMediaType.V2_JSON)
-	public Environment labelledIncludeOrigin(@PathVariable String name, @PathVariable String profiles,
+	@RequestMapping(path = "/{application}/{profiles}/{label:.*}", produces = EnvironmentMediaType.V2_JSON)
+	public Environment labelledIncludeOrigin(@PathVariable String application, @PathVariable String profiles,
 			@PathVariable String label) {
-		return getEnvironment(name, profiles, label, true);
+		return getEnvironment(application, profiles, label, true);
 	}
 
-	public Environment getEnvironment(String name, String profiles, String label, boolean includeOrigin) {
-		name = normalize(name);
+	public Environment getEnvironment(String application, String profiles, String label, boolean includeOrigin) {
+		application = normalize(application);
 		label = normalize(label);
-		Environment environment = this.repository.findOne(name, profiles, label, includeOrigin);
+		Environment environment = this.repository.findOne(application, profiles, label, includeOrigin);
 		if (!this.acceptEmpty && (environment == null || environment.getPropertySources().isEmpty())) {
 			throw new EnvironmentNotFoundException("Profile Not found");
 		}
@@ -137,18 +137,18 @@ public class EnvironmentController {
 		return Environment.normalize(part);
 	}
 
-	@RequestMapping("/{name}-{profiles}.properties")
-	public ResponseEntity<String> properties(@PathVariable String name, @PathVariable String profiles,
+	@RequestMapping("/{application}-{profiles}.properties")
+	public ResponseEntity<String> properties(@PathVariable String application, @PathVariable String profiles,
 			@RequestParam(defaultValue = "true") boolean resolvePlaceholders) throws IOException {
-		return labelledProperties(name, profiles, null, resolvePlaceholders);
+		return labelledProperties(application, profiles, null, resolvePlaceholders);
 	}
 
-	@RequestMapping("/{label}/{name}-{profiles}.properties")
-	public ResponseEntity<String> labelledProperties(@PathVariable String name, @PathVariable String profiles,
+	@RequestMapping("/{label}/{application}-{profiles}.properties")
+	public ResponseEntity<String> labelledProperties(@PathVariable String application, @PathVariable String profiles,
 			@PathVariable String label, @RequestParam(defaultValue = "true") boolean resolvePlaceholders)
 			throws IOException {
 		validateProfiles(profiles);
-		Environment environment = labelled(name, profiles, label);
+		Environment environment = labelled(application, profiles, label);
 		Map<String, Object> properties = convertToProperties(environment);
 		String propertiesString = getPropertiesString(properties);
 		if (resolvePlaceholders) {
@@ -157,18 +157,18 @@ public class EnvironmentController {
 		return getSuccess(propertiesString);
 	}
 
-	@RequestMapping("{name}-{profiles}.json")
-	public ResponseEntity<String> jsonProperties(@PathVariable String name, @PathVariable String profiles,
+	@RequestMapping("{application}-{profiles}.json")
+	public ResponseEntity<String> jsonProperties(@PathVariable String application, @PathVariable String profiles,
 			@RequestParam(defaultValue = "true") boolean resolvePlaceholders) throws Exception {
-		return labelledJsonProperties(name, profiles, null, resolvePlaceholders);
+		return labelledJsonProperties(application, profiles, null, resolvePlaceholders);
 	}
 
-	@RequestMapping("/{label}/{name}-{profiles}.json")
-	public ResponseEntity<String> labelledJsonProperties(@PathVariable String name, @PathVariable String profiles,
+	@RequestMapping("/{label}/{application}-{profiles}.json")
+	public ResponseEntity<String> labelledJsonProperties(@PathVariable String application, @PathVariable String profiles,
 			@PathVariable String label, @RequestParam(defaultValue = "true") boolean resolvePlaceholders)
 			throws Exception {
 		validateProfiles(profiles);
-		Environment environment = labelled(name, profiles, label);
+		Environment environment = labelled(application, profiles, label);
 		Map<String, Object> properties = convertToMap(environment);
 		String json = this.objectMapper.writeValueAsString(properties);
 		if (resolvePlaceholders) {
@@ -188,18 +188,18 @@ public class EnvironmentController {
 		return output.toString();
 	}
 
-	@RequestMapping({ "/{name}-{profiles}.yml", "/{name}-{profiles}.yaml" })
-	public ResponseEntity<String> yaml(@PathVariable String name, @PathVariable String profiles,
+	@RequestMapping({ "/{application}-{profiles}.yml", "/{application}-{profiles}.yaml" })
+	public ResponseEntity<String> yaml(@PathVariable String application, @PathVariable String profiles,
 			@RequestParam(defaultValue = "true") boolean resolvePlaceholders) throws Exception {
-		return labelledYaml(name, profiles, null, resolvePlaceholders);
+		return labelledYaml(application, profiles, null, resolvePlaceholders);
 	}
 
-	@RequestMapping({ "/{label}/{name}-{profiles}.yml", "/{label}/{name}-{profiles}.yaml" })
-	public ResponseEntity<String> labelledYaml(@PathVariable String name, @PathVariable String profiles,
+	@RequestMapping({ "/{label}/{application}-{profiles}.yml", "/{label}/{application}-{profiles}.yaml" })
+	public ResponseEntity<String> labelledYaml(@PathVariable String application, @PathVariable String profiles,
 			@PathVariable String label, @RequestParam(defaultValue = "true") boolean resolvePlaceholders)
 			throws Exception {
 		validateProfiles(profiles);
-		Environment environment = labelled(name, profiles, label);
+		Environment environment = labelled(application, profiles, label);
 		Map<String, Object> result = convertToMap(environment);
 		if (this.stripDocument && result.size() == 1 && result.keySet().iterator().next().equals("document")) {
 			Object value = result.get("document");
